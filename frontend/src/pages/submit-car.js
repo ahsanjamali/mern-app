@@ -16,8 +16,10 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  AppBar,
+  Toolbar,
 } from "@mui/material";
-import { Delete, DeleteOutline } from "@mui/icons-material";
+import { Delete, DeleteOutline, LogoutOutlined } from "@mui/icons-material";
 import { useDropzone } from "react-dropzone";
 import { toast } from "react-toastify";
 import api from "../utils/axios";
@@ -147,6 +149,12 @@ export default function SubmitCar() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    toast.success("Logged out successfully");
+    router.push("/");
+  };
+
   // Clean up image previews when component unmounts
   useEffect(() => {
     return () => {
@@ -163,16 +171,33 @@ export default function SubmitCar() {
       sx={{
         minHeight: "100vh",
         background: "linear-gradient(to right bottom, #f3f4f6, #e5e7eb)",
-        py: 4,
       }}
     >
-      <Container maxWidth="md">
+      <AppBar position="static" color="transparent" elevation={0}>
+        <Toolbar sx={{ justifyContent: "flex-end" }}>
+          <Button
+            onClick={handleLogout}
+            color="primary"
+            startIcon={<LogoutOutlined />}
+            sx={{
+              backgroundColor: "white",
+              "&:hover": {
+                backgroundColor: "#f3f4f6",
+              },
+              boxShadow: 1,
+              px: 3,
+              py: 1,
+            }}
+          >
+            Logout
+          </Button>
+        </Toolbar>
+      </AppBar>
+
+      <Container maxWidth="md" sx={{ py: 4 }}>
         <Paper
           elevation={0}
-          sx={{
-            p: { xs: 3, md: 5 },
-            background: "rgba(255, 255, 255, 0.9)",
-          }}
+          sx={{ p: { xs: 3, md: 5 }, background: "rgba(255, 255, 255, 0.9)" }}
         >
           <Typography
             variant="h4"
