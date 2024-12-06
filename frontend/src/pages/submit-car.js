@@ -166,6 +166,9 @@ export default function SubmitCar() {
     };
   }, []);
 
+  // Create array of numbers 1-10 for dropdown options
+  const maxPictureOptions = Array.from({ length: 10 }, (_, i) => i + 1);
+
   return (
     <Box
       sx={{
@@ -268,21 +271,25 @@ export default function SubmitCar() {
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Maximum Pictures"
-                  name="maxPictures"
-                  type="number"
-                  value={formData.maxPictures}
-                  onChange={handleChange}
-                  inputProps={{
-                    min: 1,
-                    max: 10,
-                    step: 1,
-                  }}
-                  helperText={`You can upload up to ${formData.maxPictures} pictures`}
-                />
+                <FormControl fullWidth required>
+                  <InputLabel id="max-pictures-label">
+                    Maximum Pictures
+                  </InputLabel>
+                  <Select
+                    labelId="max-pictures-label"
+                    id="max-pictures"
+                    name="maxPictures"
+                    value={formData.maxPictures}
+                    onChange={handleChange}
+                    label="Maximum Pictures"
+                  >
+                    {maxPictureOptions.map((number) => (
+                      <MenuItem key={number} value={number}>
+                        {number}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Grid>
 
               <Grid item xs={12}>

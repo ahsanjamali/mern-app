@@ -9,7 +9,6 @@ import {
   InputAdornment,
   IconButton,
   Paper,
-  Link,
 } from "@mui/material";
 import { Visibility, VisibilityOff, Email, Lock } from "@mui/icons-material";
 import { toast } from "react-toastify";
@@ -21,25 +20,81 @@ export default function Login() {
     email: "",
     password: "",
   });
+  const [errors, setErrors] = useState({
+    email: "",
+    password: "",
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Email validation function
+  const validateEmail = (email) => {
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+    return emailRegex.test(email);
+  };
+
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    // Convert email to lowercase if the field is email
+    const processedValue = name === "email" ? value.toLowerCase() : value;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: processedValue,
+    }));
+
+    // Clear error when user starts typing
+    setErrors((prev) => ({
+      ...prev,
+      [name]: "",
+    }));
+
+    // Validate email as user types (using lowercase value)
+    if (name === "email" && processedValue) {
+      if (!validateEmail(processedValue)) {
+        setErrors((prev) => ({
+          ...prev,
+          email: "Please enter a valid email address",
+        }));
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Ensure email is lowercase before submission
+    const submissionData = {
+      ...formData,
+      email: formData.email.toLowerCase(),
+    };
+
+    // Validate email before submission
+    if (!validateEmail(submissionData.email)) {
+      setErrors((prev) => ({
+        ...prev,
+        email: "Please enter a valid email address",
+      }));
+      return;
+    }
+
+    // Validate password
+    if (submissionData.password.length < 6) {
+      setErrors((prev) => ({
+        ...prev,
+        password: "Password must be at least 6 characters",
+      }));
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await api.post("/auth/login", formData);
+      const response = await api.post("/auth/login", submissionData);
       localStorage.setItem("token", response.data.token);
-      router.push("/submit-car");
       toast.success("Login successful!");
+      router.push("/submit-car");
     } catch (error) {
       console.error("Login error:", error);
       toast.error(error.response?.data?.message || "Login failed");
@@ -94,10 +149,16 @@ export default function Login() {
               autoFocus
               value={formData.email}
               onChange={handleChange}
+              error={Boolean(errors.email)}
+              helperText={errors.email}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Email sx={{ color: "primary.main" }} />
+                    <Email
+                      sx={{
+                        color: errors.email ? "error.main" : "primary.main",
+                      }}
+                    />
                   </InputAdornment>
                 ),
               }}
@@ -115,10 +176,16 @@ export default function Login() {
               autoComplete="current-password"
               value={formData.password}
               onChange={handleChange}
+              error={Boolean(errors.password)}
+              helperText={errors.password}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Lock sx={{ color: "primary.main" }} />
+                    <Lock
+                      sx={{
+                        color: errors.password ? "error.main" : "primary.main",
+                      }}
+                    />
                   </InputAdornment>
                 ),
                 endAdornment: (
@@ -139,7 +206,9 @@ export default function Login() {
               type="submit"
               fullWidth
               variant="contained"
-              disabled={loading}
+              disabled={
+                loading || Boolean(errors.email) || Boolean(errors.password)
+              }
               sx={{
                 py: 1.5,
                 fontSize: "1rem",
