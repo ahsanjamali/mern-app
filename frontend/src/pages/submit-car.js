@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import {
   Box,
@@ -17,7 +17,7 @@ import {
   FormControl,
   InputLabel,
 } from "@mui/material";
-import { Delete } from "@mui/icons-material";
+import { Delete, DeleteOutline } from "@mui/icons-material";
 import { useDropzone } from "react-dropzone";
 import { toast } from "react-toastify";
 import api from "../utils/axios";
@@ -52,26 +52,35 @@ export default function SubmitCar() {
     }
   }, [router]);
 
-  const { getRootProps, getInputProps } = useDropzone({
-    accept: {
-      "image/*": [".jpeg", ".jpg", ".png"],
-    },
-    maxFiles: formData.maxPictures,
-    onDrop: (acceptedFiles) => {
-      if (images.length + acceptedFiles.length > formData.maxPictures) {
-        toast.error(`Maximum ${formData.maxPictures} images allowed`);
+  const onDrop = useCallback(
+    (acceptedFiles) => {
+      const remainingSlots = formData.maxPictures - images.length;
+
+      if (remainingSlots <= 0) {
+        toast.error(`Maximum ${formData.maxPictures} pictures allowed`);
         return;
       }
 
-      setImages([
-        ...images,
-        ...acceptedFiles.map((file) =>
+      const filesToAdd = acceptedFiles.slice(0, remainingSlots);
+
+      setImages((prevImages) => [
+        ...prevImages,
+        ...filesToAdd.map((file) =>
           Object.assign(file, {
             preview: URL.createObjectURL(file),
           })
         ),
       ]);
     },
+    [images, formData.maxPictures]
+  );
+
+  const { getRootProps, getInputProps } = useDropzone({
+    onDrop,
+    accept: {
+      "image/*": [".jpeg", ".jpg", ".png"],
+    },
+    maxSize: 5242880, // 5MB
   });
 
   const handleChange = (e) => {
@@ -233,6 +242,24 @@ export default function SubmitCar() {
                 </TextField>
               </Grid>
 
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  required
+                  fullWidth
+                  label="Maximum Pictures"
+                  name="maxPictures"
+                  type="number"
+                  value={formData.maxPictures}
+                  onChange={handleChange}
+                  inputProps={{
+                    min: 1,
+                    max: 10,
+                    step: 1,
+                  }}
+                  helperText={`You can upload up to ${formData.maxPictures} pictures`}
+                />
+              </Grid>
+
               <Grid item xs={12}>
                 <Box
                   {...getRootProps()}
@@ -243,17 +270,17 @@ export default function SubmitCar() {
                     p: 3,
                     textAlign: "center",
                     cursor: "pointer",
-                    bgcolor: "white",
-                    transition: "all 0.2s",
                     "&:hover": {
-                      borderColor: "primary.dark",
-                      bgcolor: "rgba(37, 99, 235, 0.04)",
+                      bgcolor: "action.hover",
                     },
                   }}
                 >
                   <input {...getInputProps()} />
                   <Typography color="primary">
                     Drag & drop images here, or click to select files
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    {`${images.length}/${formData.maxPictures} pictures uploaded`}
                   </Typography>
                 </Box>
               </Grid>
@@ -262,19 +289,19 @@ export default function SubmitCar() {
                 <Grid item xs={12}>
                   <Grid container spacing={2}>
                     {images.map((file, index) => (
-                      <Grid item key={index} xs={6} sm={4} md={3}>
+                      <Grid item xs={6} sm={4} md={3} key={file.preview}>
                         <Box
                           sx={{
                             position: "relative",
                             paddingTop: "100%",
-                            borderRadius: 2,
+                            borderRadius: 1,
                             overflow: "hidden",
                           }}
                         >
                           <Box
                             component="img"
                             src={file.preview}
-                            alt={`Preview ${index}`}
+                            alt={`Preview ${index + 1}`}
                             sx={{
                               position: "absolute",
                               top: 0,
@@ -290,13 +317,14 @@ export default function SubmitCar() {
                               position: "absolute",
                               top: 8,
                               right: 8,
-                              bgcolor: "rgba(255, 255, 255, 0.8)",
+                              bgcolor: "background.paper",
                               "&:hover": {
-                                bgcolor: "rgba(255, 255, 255, 0.9)",
+                                bgcolor: "error.light",
+                                color: "white",
                               },
                             }}
                           >
-                            <Delete />
+                            <DeleteOutline />
                           </IconButton>
                         </Box>
                       </Grid>
@@ -310,31 +338,16 @@ export default function SubmitCar() {
                   <Button
                     type="submit"
                     variant="contained"
-                    disabled={loading}
-                    sx={{
-                      flex: 1,
-                      py: 1.5,
-                      "&:hover": {
-                        transform: "translateY(-1px)",
-                        transition: "transform 0.2s",
-                      },
-                    }}
+                    disabled={loading || images.length === 0}
+                    fullWidth
                   >
                     {loading ? "Submitting..." : "Submit Car Listing"}
                   </Button>
-
                   <Button
                     type="button"
                     variant="outlined"
                     onClick={resetForm}
                     disabled={loading}
-                    sx={{
-                      py: 1.5,
-                      "&:hover": {
-                        transform: "translateY(-1px)",
-                        transition: "transform 0.2s",
-                      },
-                    }}
                   >
                     Reset Form
                   </Button>
