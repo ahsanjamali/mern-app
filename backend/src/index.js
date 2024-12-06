@@ -10,11 +10,27 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: [process.env.FRONTEND_URL],
+    origin: [
+      "http://localhost:3000",
+      "https://your-frontend-domain.vercel.app", // Add your Vercel domain
+    ],
     credentials: true,
   })
 );
 app.use(express.json());
+
+// Root route
+app.get("/", (req, res) => {
+  res.json({
+    message: "Car Selling Service API is running",
+    status: "active",
+    version: "1.0.0",
+  });
+});
+
+// Routes
+app.use("/api/auth", require("./routes/auth"));
+app.use("/api/cars", require("./routes/cars"));
 
 // Connect to MongoDB
 mongoose
@@ -22,11 +38,8 @@ mongoose
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-// Routes
-app.use("/api/auth", require("./routes/auth"));
-app.use("/api/cars", require("./routes/cars"));
-
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+module.exports = app;
