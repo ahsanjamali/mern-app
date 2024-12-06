@@ -12,7 +12,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
-      "https://your-frontend-domain.vercel.app", // Add your Vercel domain
+      "https://mern-app-jowf.vercel.app", // Add your Vercel domain
     ],
     credentials: true,
   })
