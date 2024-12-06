@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { Visibility, VisibilityOff, Email, Lock } from "@mui/icons-material";
 import { toast } from "react-toastify";
-import axios from "axios";
+import api from "../utils/axios";
 
 export default function Login() {
   const router = useRouter();
@@ -36,15 +36,12 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        // `${import.meta.env.NEXT_PUBLIC_API_URL}/auth/login`,
-        formData
-      );
+      const response = await api.post("/auth/login", formData);
       localStorage.setItem("token", response.data.token);
       router.push("/submit-car");
       toast.success("Login successful!");
     } catch (error) {
+      console.error("Login error:", error);
       toast.error(error.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
