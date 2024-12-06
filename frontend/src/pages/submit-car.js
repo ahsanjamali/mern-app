@@ -44,6 +44,14 @@ export default function SubmitCar() {
     }
   }, []);
 
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please login first");
+      router.push("/");
+    }
+  }, [router]);
+
   const { getRootProps, getInputProps } = useDropzone({
     accept: {
       "image/*": [".jpeg", ".jpg", ".png"],
@@ -93,25 +101,35 @@ export default function SubmitCar() {
     setLoading(true);
 
     try {
+      // Create FormData
       const formDataToSend = new FormData();
       formDataToSend.append("model", formData.model);
       formDataToSend.append("price", formData.price);
       formDataToSend.append("phone", formData.phone);
       formDataToSend.append("city", formData.city);
 
+      // Append images
       images.forEach((image) => {
         formDataToSend.append("images", image);
       });
 
-      await api.post("/cars", formDataToSend, {
+      // Get token
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const response = await api.post("/cars", formDataToSend, {
         headers: {
           "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
         },
       });
 
       toast.success("Car listing submitted successfully!");
-      resetForm(); // Reset form after successful submission
+      resetForm();
     } catch (error) {
+      console.error("Submission error:", error);
       toast.error(
         error.response?.data?.message || "Error submitting car listing"
       );

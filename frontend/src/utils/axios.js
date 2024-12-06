@@ -5,40 +5,35 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000,
 });
 
-// Request interceptor
+// Add request interceptor to include token in every request
 api.interceptors.request.use(
   (config) => {
-    console.log("Making request to:", config.url, {
-      method: config.method,
-      baseURL: config.baseURL,
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
+    console.log("Request config:", {
+      url: config.url,
       headers: config.headers,
+      method: config.method,
     });
     return config;
   },
   (error) => {
-    console.error("Request error:", error);
     return Promise.reject(error);
   }
 );
 
-// Response interceptor
+// Add response interceptor for handling auth errors
 api.interceptors.response.use(
-  (response) => {
-    console.log("Response received:", {
-      status: response.status,
-      data: response.data,
-    });
-    return response;
-  },
+  (response) => response,
   (error) => {
-    console.error("Response error:", {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-    });
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+      window.location.href = "/";
+    }
     return Promise.reject(error);
   }
 );
